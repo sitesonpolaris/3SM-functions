@@ -52,7 +52,7 @@ exports.handler = async (event) => {
           SFNAME: formData.secondaryFirstName || '',
           SLNAME: formData.secondaryLastName || '',
           SEMAIL: formData.secondaryEmail || '',
-          EMAILUPDATES: formData.emailUpdates
+          UPDATES: formData.emailUpdates
         },
         status_if_new: 'subscribed'
       });
@@ -75,7 +75,7 @@ exports.handler = async (event) => {
             SFNAME: formData.secondaryFirstName || '',
             SLNAME: formData.secondaryLastName || '',
             SEMAIL: formData.secondaryEmail || '',
-            EMAILUPDATES: formData.emailUpdates
+            UPDATES: formData.emailUpdates
           }
         });
 
