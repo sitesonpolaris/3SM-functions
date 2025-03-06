@@ -54,7 +54,8 @@ exports.handler = async (event) => {
           SEMAIL: formData.secondaryEmail || '',
           UPDATES: formData.emailUpdates
         },
-        status_if_new: 'subscribed'
+        status_if_new: 'subscribed',
+        tags: ['Ownership Form'] // Add the tag here
       });
 
       console.log('Subscriber updated successfully');
@@ -76,7 +77,8 @@ exports.handler = async (event) => {
             SLNAME: formData.secondaryLastName || '',
             SEMAIL: formData.secondaryEmail || '',
             UPDATES: formData.emailUpdates
-          }
+          },
+        tags: ['Ownership Form'] // Add the tag here
         });
 
         console.log('New subscriber added');
