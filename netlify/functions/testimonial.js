@@ -50,7 +50,8 @@ exports.handler = async (event) => {
       // If the user exists, update their information
       await mailchimp.lists.updateListMember(listId, subscriberHash, {
         merge_fields: { FNAME, LNAME, ROLE, STORY, PROFILEPIC },
-        status_if_new: 'subscribed'
+        status_if_new: 'subscribed',
+        tags: ['Testimonial Form'] // Add the "Testimonial Form" tag
       });
 
       return {
@@ -64,7 +65,8 @@ exports.handler = async (event) => {
         const response = await mailchimp.lists.addListMember(listId, {
           email_address: email,
           status: 'subscribed',
-          merge_fields: { FNAME, LNAME, ROLE, STORY, PROFILEPIC }
+          merge_fields: { FNAME, LNAME, ROLE, STORY, PROFILEPIC },
+          tags: ['Testimonial Form'] // Add the "Testimonial Form" tag
         });
 
         return {
