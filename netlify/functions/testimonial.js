@@ -7,7 +7,7 @@ mailchimp.setConfig({
 
 exports.handler = async (event) => {
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*', // Adjust for security if needed
+    'Access-Control-Allow-Origin': '*', // Replace with your frontend domain for security
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json'
@@ -30,36 +30,52 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { FNAME, LNAME, ROLE, STORY, PROFILEPIC } = JSON.parse(event.body);
+    const { email, FNAME, LNAME, ROLE, STORY, PROFILEPIC } = JSON.parse(event.body);
 
-    if (!FNAME || !LNAME || !STORY) {
+    if (!email || !FNAME || !LNAME || !STORY) {
       return {
         statusCode: 400,
         headers: corsHeaders,
-        body: JSON.stringify({ error: 'Required fields missing' })
+        body: JSON.stringify({ error: 'Email and required fields missing' })
       };
     }
 
-    const response = await mailchimp.lists.addListMember(
-      process.env.MAILCHIMP_LIST_ID,
-      {
-        email_address: `${FNAME.toLowerCase()}.${LNAME.toLowerCase()}@testimonial.threesistersmarket.coop`,
-        status: 'subscribed',
-        merge_fields: {
-          FNAME,
-          LNAME,
-          ROLE,
-          STORY,
-          PROFILEPIC
-        }
-      }
-    );
+    const listId = process.env.MAILCHIMP_LIST_ID;
+    const subscriberHash = require('crypto').createHash('md5').update(email.toLowerCase()).digest('hex');
 
-    return {
-      statusCode: 200,
-      headers: corsHeaders,
-      body: JSON.stringify(response)
-    };
+    try {
+      // Try fetching the existing member
+      await mailchimp.lists.getListMember(listId, subscriberHash);
+
+      // If the user exists, update their information
+      await mailchimp.lists.updateListMember(listId, subscriberHash, {
+        merge_fields: { FNAME, LNAME, ROLE, STORY, PROFILEPIC },
+        status_if_new: 'subscribed'
+      });
+
+      return {
+        statusCode: 200,
+        headers: corsHeaders,
+        body: JSON.stringify({ message: 'Subscriber updated successfully' })
+      };
+    } catch (error) {
+      // If the member does not exist, add them
+      if (error.status === 404) {
+        const response = await mailchimp.lists.addListMember(listId, {
+          email_address: email,
+          status: 'subscribed',
+          merge_fields: { FNAME, LNAME, ROLE, STORY, PROFILEPIC }
+        });
+
+        return {
+          statusCode: 200,
+          headers: corsHeaders,
+          body: JSON.stringify(response)
+        };
+      }
+
+      throw error;
+    }
   } catch (error) {
     console.error('Mailchimp API Error:', error);
 
