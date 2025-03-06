@@ -6,10 +6,25 @@ mailchimp.setConfig({
 });
 
 exports.handler = async (event) => {
+  // Handle CORS preflight request
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',  // Allows any domain
+        'Access-Control-Allow-Methods': 'POST, OPTIONS', // Allowed methods
+        'Access-Control-Allow-Headers': 'Content-Type', // Allowed headers
+      },
+      body: '',
+    };
+  }
+
+  // Allow only POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       headers: {
+        'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ error: 'Method not allowed' }),
@@ -23,9 +38,10 @@ exports.handler = async (event) => {
       return {
         statusCode: 400,
         headers: {
+          'Access-Control-Allow-Origin': '*',
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ error: 'Email is required' })
+        body: JSON.stringify({ error: 'Email is required' }),
       };
     }
 
@@ -48,9 +64,10 @@ exports.handler = async (event) => {
     return {
       statusCode: 200,
       headers: {
+        'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(response)
+      body: JSON.stringify(response),
     };
   } catch (error) {
     console.error('Mailchimp API Error:', error);
@@ -61,9 +78,10 @@ exports.handler = async (event) => {
         return {
           statusCode: 400,
           headers: {
+            'Access-Control-Allow-Origin': '*',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ error: 'This email is already subscribed' })
+          body: JSON.stringify({ error: 'This email is already subscribed' }),
         };
       }
     }
@@ -71,9 +89,10 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers: {
+        'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ error: 'Failed to submit form. Please try again later.' })
+      body: JSON.stringify({ error: 'Failed to submit form. Please try again later.' }),
     };
   }
 };
