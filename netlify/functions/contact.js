@@ -51,10 +51,11 @@ exports.handler = async (event) => {
       const existingMember = await mailchimp.lists.getListMember(listId, subscriberHash);
 
       if (existingMember) {
-        // Update existing subscriber with new merge fields
+        // Update existing subscriber with new merge fields and add the "Contact Form" tag
         await mailchimp.lists.updateListMember(listId, subscriberHash, {
           merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE },
-          status_if_new: 'subscribed'
+          status_if_new: 'subscribed',
+          tags: ['Contact Form'] // Add the tag here
         });
 
         return {
@@ -68,11 +69,12 @@ exports.handler = async (event) => {
       }
     } catch (error) {
       if (error.status === 404) {
-        // Email not found, proceed with adding a new subscriber
+        // Email not found, proceed with adding a new subscriber and adding the "Contact Form" tag
         const response = await mailchimp.lists.addListMember(listId, {
           email_address: email,
           status: 'subscribed',
-          merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE }
+          merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE },
+          tags: ['Contact Form'] // Add the tag here
         });
 
         return {
