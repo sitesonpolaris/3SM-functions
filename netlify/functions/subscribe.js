@@ -45,13 +45,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // Add subscriber to Mailchimp list
+    // Add subscriber to Mailchimp list with "Subscription Form" tag
     const response = await mailchimp.lists.addListMember(
       process.env.MAILCHIMP_LIST_ID,
       {
         email_address: email,
         status: 'subscribed',
-        merge_fields: additionalFields
+        merge_fields: additionalFields,
+        tags: ['Subscription Form'] // Add the tag "Subscription Form" here
       }
     );
 
