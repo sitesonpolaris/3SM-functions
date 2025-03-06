@@ -6,20 +6,18 @@ mailchimp.setConfig({
 });
 
 exports.handler = async (event) => {
-  // Handle CORS preflight request
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',  // Allows any domain
-        'Access-Control-Allow-Methods': 'POST, OPTIONS', // Allowed methods
-        'Access-Control-Allow-Headers': 'Content-Type', // Allowed headers
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
       },
       body: '',
     };
   }
 
-  // Allow only POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
@@ -45,46 +43,59 @@ exports.handler = async (event) => {
       };
     }
 
-    const response = await mailchimp.lists.addListMember(
-      process.env.MAILCHIMP_LIST_ID,
-      {
-        email_address: email,
-        status: 'subscribed',
-        merge_fields: {
-          FNAME,
-          LNAME,
-          PHONE,
-          MESSAGE,
-          TOPIC,
-          SOURCE
-        }
-      }
-    );
+    const listId = process.env.MAILCHIMP_LIST_ID;
+    const subscriberHash = require('crypto').createHash('md5').update(email.toLowerCase()).digest('hex');
 
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(response),
-    };
-  } catch (error) {
-    console.error('Mailchimp API Error:', error);
+    try {
+      // Check if the email already exists in the Mailchimp list
+      const existingMember = await mailchimp.lists.getListMember(listId, subscriberHash);
 
-    if (error.status === 400 && error.response?.text) {
-      const response = JSON.parse(error.response.text);
-      if (response.title === 'Member Exists') {
+      if (existingMember) {
+        // Update existing subscriber with new merge fields
+        await mailchimp.lists.updateListMember(listId, subscriberHash, {
+          merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE },
+          status_if_new: 'subscribed'
+        });
+
         return {
-          statusCode: 400,
+          statusCode: 200,
           headers: {
             'Access-Control-Allow-Origin': '*',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ error: 'This email is already subscribed' }),
+          body: JSON.stringify({ message: 'Subscriber updated successfully' }),
+        };
+      }
+    } catch (error) {
+      if (error.status === 404) {
+        // Email not found, proceed with adding a new subscriber
+        const response = await mailchimp.lists.addListMember(listId, {
+          email_address: email,
+          status: 'subscribed',
+          merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE }
+        });
+
+        return {
+          statusCode: 200,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message: 'New subscriber added successfully' }),
         };
       }
     }
+
+    return {
+      statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ error: 'Unexpected error occurred' }),
+    };
+  } catch (error) {
+    console.error('Mailchimp API Error:', error);
 
     return {
       statusCode: 500,
