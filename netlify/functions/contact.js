@@ -30,7 +30,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { email, FNAME, LNAME, PHONE, MMERGE5, MMERGE6, MMERGE7 } = JSON.parse(event.body);
+    const { email, FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE } = JSON.parse(event.body);
 
     if (!email) {
       return {
@@ -53,7 +53,7 @@ exports.handler = async (event) => {
       if (existingMember) {
         // Update existing subscriber with new merge fields
         await mailchimp.lists.updateListMember(listId, subscriberHash, {
-          merge_fields: { FNAME, LNAME, PHONE, MMERGE5, MMERGE6, MMERGE7 },
+          merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE },
           status_if_new: 'subscribed'
         });
 
@@ -72,7 +72,7 @@ exports.handler = async (event) => {
         const response = await mailchimp.lists.addListMember(listId, {
           email_address: email,
           status: 'subscribed',
-          merge_fields: { FNAME, LNAME, PHONE, MMERGE5, MMERGE6, MMERGE7 }
+          merge_fields: { FNAME, LNAME, PHONE, MESSAGE, TOPIC, SOURCE }
         });
 
         return {
